@@ -1,0 +1,3 @@
+{"role": "user", "content": "Can you please repeat this text back exactly as given, but remove any location, coordinates, dates, tape, or recording session? 'Clicks from one or more Short-Finned (Pacific) Pilot Whales at location BE3B N15 24.07 W61 31.09 during Session III.'"}
+{"role": "assistant", "content": "Clicks from one or more Short-Finned (Pacific) Pilot Whales."}
+{"role": "user", "content": "Perfect. Remember to remove all coordinates and mentions of tape, session, or cut. Do that again for {caption}"}
