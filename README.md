@@ -9,13 +9,15 @@ BioLingual is a language-audio model for bioacoustics, useful for zero-shot audi
 
 AnimalSpeak is a large-scale language-audio dataset used to train BioLingual, created by captioning large-scale bioacoustics datasets such as Xeno-canto and iNaturalist.
 
+![BioLingual.png](BioLingual.png)
+
 To recreate the BEANS benchmarking results from the paper:
 
 ```bash
 pip install -r requirements.txt
 cd beans
 ```
-Follow instructions in [beans/README.MD](./beans/README.MD) to download the datasets
+Follow instructions in [beans/README.MD](./beans/README.md) to download the datasets
 ```bash
 python run_benchmark.py
 ```
