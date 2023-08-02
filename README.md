@@ -1,13 +1,13 @@
 # BioLingual
 ## Contrastive language-audio pretraining for bioacoustics
 
-**Paper**: [arxiv link](#)
+**Paper**: Transferable Models for Bioacoustics with Human Language Supervision [arxiv link](#)
 
 Use the model on HuggingFace! [davidrrobinson/BioLingual](https://huggingface.co/davidrrobinson/BioLingual)
 
-BioLingual is a language-audio model for bioacoustics, useful for zero-shot audio classification and sound detection, text-to-audio search,or for fine-tuning on new bioacoustic tasks.
+BioLingual is a language-audio model for bioacoustics, useful for zero-shot audio classification and sound detection, text-to-audio search, or for fine-tuning on new bioacoustic tasks.
 
-AnimalSpeak is a large-scale language-audio dataset used to train BioLingual, created by captioning large-scale bioacoustics datasets such as Xeno-canto and iNaturalist.
+AnimalSpeak is a large-scale language-audio dataset used to train BioLingual, created by captioning bioacoustics archives such as Xeno-canto and iNaturalist.
 
 ![BioLingual.png](BioLingual.png)
 

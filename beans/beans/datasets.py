@@ -124,7 +124,10 @@ class ClassificationDataset(Dataset):
         self.ys = []
 
         for _, row in df.iterrows():
-            self.xs.append(row['path'])
+            if "test_set.csv" in metadata_path:
+                self.xs.append("../" + row['path'])
+            else:
+                self.xs.append(row['path'])
 
             if row['label'] not in label_to_id:
                 if unknown_label is not None:

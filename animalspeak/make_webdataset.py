@@ -106,4 +106,4 @@ def csv_to_webdataset(csv_path, output_path, max_files_per_shard=50000):
 
 # usage
 if __name__ == "__main__":
-    csv_to_webdataset("../animals/beans/test_set.csv", "animals_webdataset/test/")
+    csv_to_webdataset("../animals/beans/test_set.csv", "animals_webdataset/test/") # make webdataset for retrieval eval

@@ -529,7 +529,6 @@ def select_text(json_dict_raw, text_augment_selection):
         )
     return texts
 
-
 def preprocess_single(
         sample,
         audio_ext,
@@ -545,19 +544,25 @@ def preprocess_single(
     """
     Preprocess a single sample for wdsdataloader.
     """
-    audio_data, orig_sr = sample[audio_ext]
+    audio_key = "flac"
+    json_key = "json"
+    audio_index = [key for key in sample if audio_key in key][0]
+    json_index = [key for key in sample if json_key in key][0]
+
+    audio_data, orig_sr = sample[audio_index]
     audio_data = int16_to_float32_torch(float32_to_int16_torch(audio_data[0]))
 
     sample = get_audio_features(sample, audio_data, max_len, data_truncating, data_filling, audio_cfg)
-    del sample[audio_ext]
+    del sample[audio_index]
 
-    json_dict_raw = sample[text_ext]
+    json_dict_raw = sample[json_index]
 
     texts = select_text(json_dict_raw, text_augment_selection)
     sample["full_text"] = texts
 
     if isinstance(texts, list) and isinstance(texts[0], str) and len(texts) > 1:
-        texts = random.choice(texts)
+        texts = texts[0]
+        # texts = random.choice(texts)
     sample["raw_text"] = texts
     sample["text"] = tokenizer(texts, tmodel=tmodel)  # text shape: [num_token]
     if class_index_dict is not None:
@@ -574,7 +579,7 @@ def preprocess_single(
         class_labels[np.in1d(list(class_index_dict.keys()), json_dict_raw["tag"])] = 1
         sample["class_label"] = torch.tensor(class_labels).float()
 
-    del sample[text_ext]
+    del sample[json_index]
     sample["audio_name"] = sample["__key__"].split("/")[-1] + "." + audio_ext
     sample["text_name"] = sample["__key__"].split("/")[-1] + "." + text_ext
     sample["audio_orig_sr"] = orig_sr
@@ -603,9 +608,12 @@ def collate_fn_with_preprocess(batch,
     data_preprocessed = []
 
     for sample in batch:
+        prepped = preprocess_single(sample, audio_ext, text_ext, max_len, audio_cfg, tmodel, class_index_dict, data_filling,
+                              data_truncating, text_augment_selection)
         data_preprocessed.append(
-            preprocess_single(sample, audio_ext, text_ext, max_len, audio_cfg, tmodel, class_index_dict, data_filling,
-                              data_truncating, text_augment_selection))
+            prepped
+        )
+
 
     batch_dict = {}
     for k in data_preprocessed[0].keys():

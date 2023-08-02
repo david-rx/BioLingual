@@ -87,6 +87,7 @@ class CLAPZeroShotClassifier(nn.Module):
         if multi_label:
             self.loss_func = nn.BCEWithLogitsLoss()
         self.labels = labels
+        print("labels", self.labels)
         self.multi_label = multi_label
         self.device = "cuda" if torch.cuda.is_available() else "mps"
 
@@ -100,8 +101,10 @@ class CLAPZeroShotClassifier(nn.Module):
 class CLAPClassifier(nn.Module):
     def __init__(self, model_path, num_classes, multi_label = False) -> None:
         super().__init__()
-        self.clap = ClapAudioModelWithProjection.from_pretrained(model_path, projection_dim=num_classes,
-                                                                ignore_mismatched_sizes=True)
+        self.clap = ClapAudioModelWithProjection.from_pretrained(model_path)
+        print("fixed clap.")
+        
+        self.linear = nn.Linear(in_features=512, out_features=num_classes)
         self.processor = AutoProcessor.from_pretrained(model_path)
         self.multi_label = multi_label
 

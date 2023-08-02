@@ -133,7 +133,7 @@ def init_distributed_device(args):
             device = 'cuda:0'
         torch.cuda.set_device(device)
     else:
-        device = 'cpu'
+        device = 'mps'
     args.device = device
     device = torch.device(device)
     return device

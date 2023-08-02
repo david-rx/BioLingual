@@ -433,7 +433,7 @@ def main():
             checkpoint = torch.load(args.resume, map_location=device)
             if "epoch" in checkpoint:
                 # resuming a train checkpoint w/ epoch and optimizer state
-                start_epoch = checkpoint["epoch"]
+                # start_epoch = checkpoint["epoch"]
                 sd = checkpoint["state_dict"]
                 if not args.distributed and next(iter(sd.items()))[0].startswith(
                     "module"

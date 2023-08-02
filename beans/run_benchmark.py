@@ -18,21 +18,24 @@ MODELS = [
     # ('resnet152', 'resnet152', ''),
     # ('resnet152-pretrained', 'resnet152-pretrained', ''),
     # ('vggish', 'vggish', ''),
-    # ('davidrrobinson/BioLingual', 'zero-shot-clap', '')
-    ('davidrrobinson/BioLingual', 'language-audio-clap', '')
-
+    ('davidrrobinson/BioLingual', 'clap', ''),
+    ('laion/clap-htsat-unfused', 'clap', '')
+    # ('laion/clap-htsat-unfused', 'zero-shot-clap', '')
+    # ('davidrrobinson/BioLingual', 'language-audio-clap', '')
 ]
 
 TASKS = [
-    ('classification', 'watkins'),
+    # ('classification', 'watkins'),
+    # ('classification', 'animals')
+    # ('classification', 'bat_behaviors')
     # ('classification', 'bats'),
     # ('classification', 'dogs'),
-    # ('classification', 'cbi'),
+    ('classification', 'cbi'),
     # ('classification', 'humbugdb'),
     # ('detection', 'dcase'),
-    # ('detection', 'enabirds'),
+    ('detection', 'enabirds'),
     # ('detection', 'hiceas'),
-    # ('detection', 'hainan-gibbons'),
+    ('detection', 'hainan-gibbons'),
     # ('detection', 'rfcx'),
     # ('classification', 'esc50'),
     # ('classification', 'speech-commands'),
@@ -41,8 +44,8 @@ TASKS = [
 for model_name, model_type, model_params in MODELS:
     for task, dataset in TASKS:
         log_name = model_name.split("/")[-1] + "-" + model_type if model_type != model_name else model_name
-        print(f'Running {dataset}-{log_name}', file=sys.stderr)
-        log_path = f'logs/{dataset}-{log_name}-beansenv'
+        print(f'Running {dataset}-{log_name}-linearfix', file=sys.stderr)
+        log_path = f'logs/{dataset}-{log_name}-linearfix'
         try:
             if model_type in ['lr', 'svm', 'decisiontree', 'gbdt', 'xgboost']:
                 python[

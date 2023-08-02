@@ -25,5 +25,9 @@ python -m src.laion_clap.training.main \
     --data-filling "repeatpad" \
     --data-truncating "rand_trunc" \
     --prefetch-factor 2 \
-    --resume "../beans/BioLingual.pt"
+    --resume "../../beans/BioLingual.pt"
+    # --resume "630k-audioset-best.pt"
+    # --resume "../../beans/BioLingual.pt"
     # --resume "630k-audioset-best.pt"    
+    # --resume "../../beans/BioLingual.pt"
+    # --device "mps"

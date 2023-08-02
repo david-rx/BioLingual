@@ -204,7 +204,7 @@ class ClipLoss(nn.Module):
                     self.prev_num_logits = num_logits
             else:
                 labels = self.labels[device]
-            if not self.weighted_loss:
+            if not self.weighted_loss: #BioLingual: This is the loss used
                 total_loss = (
                     F.cross_entropy(logits_per_audio, labels) +
                     F.cross_entropy(logits_per_text, labels)

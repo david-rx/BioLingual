@@ -1,3 +1,4 @@
+from typing import List
 import json
 import logging
 import math
@@ -77,8 +78,10 @@ def train_one_epoch(
     end = time.time()
 
     for i, batch in enumerate(dataloader):
+
         # logging.info(f"batch {i} of {num_batches_per_epoch}")
         step = num_batches_per_epoch * epoch + i
+
         if isinstance(scheduler, dict):
             for s in scheduler.values():
                 s(step)
@@ -307,20 +310,26 @@ def evaluate(model, data, epoch, args, tb_writer=None):
                 "all_audio_features": [],
                 "all_text_features": [],
                 "all_audio_features_mlp": [],
-                "all_text_features_mlp": []
+                "all_text_features_mlp": [],
+                "texts": []
             }  # cumulative_loss = 0.0
         else:
             eval_info["all"] = {
                 "cumulative_loss": 0.0,
                 "num_samples": 0,
                 "all_audio_features": [],
-                "all_text_features": []
+                "all_text_features": [],
+                "texts": []
             }  # cumu
         # all_audio_features, all_text_features, all_audio_features_mlp, all_text_features_mlp = [], [], [], []
         with torch.no_grad():
             for i, batch in enumerate(dataloader):
+                # if i > 10:
+                #     break
+
                 audios = batch  # contains mel_spec, wavform, and longer list
                 texts = batch['text']
+                all_texts = batch["raw_text"]
                 # audios = audios.to(device=device, non_blocking=True)
 
                 all_names = list(set(["-".join(b.split("/")[-3:-1]) for b in batch['__url__']]))
@@ -334,13 +343,15 @@ def evaluate(model, data, epoch, args, tb_writer=None):
                                 "all_text_features": [],
                                 "all_audio_features_mlp": [],
                                 "all_text_features_mlp": [],
+                                "texts": []
                             }
                         else:
                             eval_info[name] = {
                                 "cumulative_loss": 0.0,
                                 "num_samples": 0,
                                 "all_audio_features": [],
-                                "all_text_features": []
+                                "all_text_features": [],
+                                "texts": []
                             }
                 with autocast():
                     (
@@ -397,6 +408,7 @@ def evaluate(model, data, epoch, args, tb_writer=None):
                                 eval_info[n]["all_text_features"].append(
                                     text_features.cpu()
                                 )
+                                eval_info[n]["texts"].extend(all_texts)
                                 if args.clap_mlploss:
                                     eval_info[n]["all_audio_features_mlp"].append(
                                         audio_features_mlp.cpu()
@@ -421,6 +433,7 @@ def evaluate(model, data, epoch, args, tb_writer=None):
                                         0, torch.tensor(idx).long()
                                     )
                                 )
+                                eval_info[n]["texts"].extend(all_texts)
                                 if args.clap_mlploss:
                                     eval_info[n]["all_audio_features_mlp"].append(
                                         audio_features_mlp.cpu().index_select(
@@ -443,24 +456,16 @@ def evaluate(model, data, epoch, args, tb_writer=None):
             if is_master(args):
                 val_metrics_per_dataset = {}
                 for n in eval_info.keys():
+                    print("eval n is", n)
                     if args.clap_mlploss:
-                        metrics_single_dataset = get_metrics(
-                            audio_features=torch.cat(eval_info[n]["all_audio_features"]),
-                            text_features=torch.cat(eval_info[n]["all_text_features"]),
-                            logit_scale_a=logit_scale_a.cpu(),
-                            audio_features_mlp=torch.cat(
-                                eval_info[n]["all_audio_features_mlp"]
-                            ),
-                            text_features_mlp=torch.cat(eval_info[n]["all_text_features_mlp"]),
-                            logit_scale_t=logit_scale_t.cpu(),
-                            mlp_loss=args.clap_mlploss
-                        )
+                        raise NotImplementedError("Clap loss eval not implemented!")
                     else:
-                        metrics_single_dataset = get_metrics(
+                        metrics_single_dataset = get_metrics_biolingual(
                             audio_features=torch.cat(eval_info[n]["all_audio_features"]),
                             text_features=torch.cat(eval_info[n]["all_text_features"]),
                             logit_scale_a=logit_scale_a.cpu(),
-                            mlp_loss=args.clap_mlploss
+                            logit_scale_t=logit_scale_t.cpu(),
+                            captions=eval_info[n]["texts"]
                         )
                     val_metrics_per_dataset[n] = {
                         n + "/" + k: v for k, v in metrics_single_dataset.items()
@@ -500,6 +505,109 @@ def evaluate(model, data, epoch, args, tb_writer=None):
     else:
         return metrics
 
+import torch
+from torch.nn import functional as F
+import numpy as np
+
+def get_metrics_biolingual(
+        audio_features,
+        text_features,
+        logit_scale_a,
+        logit_scale_t=None,
+        captions = None,
+):
+    """
+    Calculate precision@1 and mean-average precision
+    for text-to-audio and audio-to-text rankings.
+    Considers answers relevant based on equivalent captions,
+    
+    """
+    print(f"audio f shape {audio_features.shape} text f shape {text_features.shape} captions len {len(captions)}")
+    print("logit scale a", logit_scale_a)
+    print("logit scale t", logit_scale_t)
+    metrics = {}
+    logits_per_audio = (logit_scale_a * audio_features @ text_features.t()).detach().cpu()
+    logits_per_text = logits_per_audio.t().detach().cpu()
+    # In get_metrics_biolingual function
+
+    assert len(captions) == audio_features.shape[0] == text_features.shape[0], "Mismatched dimensions between captions and features"
+    assert logits_per_audio.shape == logits_per_text.t().shape, "Mismatched dimensions between logits"
+
+    
+    # logits_per_text = logits_per_audio.t().detach().cpu()
+
+    labels = torch.arange(audio_features.shape[0]).long()
+    # Change the loss from two terms into four terms with 2x2 combined CE loss
+    total_loss = (
+                            F.cross_entropy(logits_per_audio, labels)
+                            + F.cross_entropy(logits_per_text, labels)
+                    ) / 2
+
+    metrics[f"cumulative_loss"] = total_loss.item()
+    metrics[f"num_samples"] = audio_features.shape[0]
+
+    logits = {"audio_to_text": logits_per_audio, "text_to_audio": logits_per_text}
+    print("logits are", logits)
+
+    print("captions len", len(captions))
+    duplicates = get_duplicates_matrix(captions)
+    assert duplicates.shape == (len(captions), len(captions)), "Invalid shape for duplicates matrix"
+    assert torch.all(torch.eq(duplicates, duplicates.t())), "Duplicates matrix should be symmetric"
+
+    for name, logit in logits.items():
+        ranking = torch.argsort(logit, descending=True)
+        ranks = torch.zeros_like(ranking)
+        for i in range(ranking.size(0)):
+            ranks[i, ranking[i]] = torch.arange(ranking.size(1))
+
+        relevant_counts_at_k = {k: np.zeros(len(text_features), dtype=float) for k in [1, 3, 5, 10]}
+        precision_at_k = {k: np.zeros(len(text_features), dtype=int) for k in [1, 3, 5, 10]}
+        ap_at_10 = np.zeros(len(text_features))
+
+        for i in range(len(text_features)):
+            equivalent_classes = duplicates[i]
+            for k in relevant_counts_at_k:
+                assert relevant_counts_at_k[k][i] <= k, "There cannot be more than k relevant items in top k"
+                relevant_items_at_k = ranks[i, equivalent_classes] < k
+                relevant_counts_at_k[k][i] = relevant_items_at_k.sum().item()
+                precision_at_k[k][i] = relevant_counts_at_k[k][i] / k
+                assert relevant_counts_at_k[k][i] <= k, "22There cannot be more than k relevant items in top k"
+
+            # Compute AP@10
+            temp_precision = 0
+            count_relevant_items = 0
+            for rank in range(10):  # top 
+                if equivalent_classes[ranking[i, rank]]:  # Check if the item at the current rank is relevant
+                    count_relevant_items += 1
+                    temp_precision += count_relevant_items / (rank + 1)  # precision@rank for the current item
+            ap_at_10[i] = temp_precision / min(10, len(equivalent_classes[equivalent_classes]))  # If less than 10 items, adjust denominator
+
+        total_relevant_items = duplicates.sum(axis=1).detach().cpu().numpy()
+        print(metrics)
+        for k in [1, 3, 5, 10]:
+            # Compute Recall@k
+            metrics[f"{name}_R@{k}"] = (relevant_counts_at_k[k] / np.maximum(total_relevant_items, 1)).mean()
+            # Compute Precision@k
+            metrics[f"{name}_P@{k}"] = precision_at_k[k].mean()
+
+        # Compute MAP@10
+        metrics[f"{name}_MAP@10"] = ap_at_10.mean()
+
+    print("finished metrics!")
+    print("metrics!", metrics)
+    return metrics
+
+def clean_caption(caption):
+    if caption.startswith("The sound of a "):
+        caption = caption[len("The sound of a "):]
+    elif caption.startswith("The sound of an "):
+        caption = caption[len("The sound of an "):]
+    return caption.strip()
+
+def get_duplicates_matrix(captions: List[str]):
+    captions = [clean_caption(caption) for caption in captions]
+    duplicates_matrix = np.array([[cap1 == cap2 for cap2 in captions] for cap1 in captions])
+    return torch.from_numpy(duplicates_matrix)
 
 def get_metrics(
         audio_features,
@@ -567,6 +675,7 @@ def get_metrics(
         metrics[f"{name}_mean_rank"] = preds.mean() + 1
         metrics[f"{name}_median_rank"] = np.floor(np.median(preds)) + 1
         for k in [1, 5, 10]:
+            print(k, preds < k)
             metrics[f"{name}_R@{k}"] = np.mean(preds < k)
         # map@10
         metrics[f"{name}_mAP@10"] = np.mean(np.where(preds < 10, 1 / (preds + 1), 0.0))
