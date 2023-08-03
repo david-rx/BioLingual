@@ -118,6 +118,7 @@ class CLAPClassifier(nn.Module):
         x = [s.cpu().numpy() for s in x]
         inputs = self.processor(audios=x, return_tensors="pt", sampling_rate=48000, padding=True).to(self.device)
         out = self.clap(**inputs).audio_embeds
+        out = self.linear(out)
         loss = self.loss_func(out, y)
         return loss, out
 
