@@ -46,7 +46,7 @@ def evaluate_zeroshot(model, data, start_epoch, args, writer):
         metrics["num_samples"] = all_audio_features.shape[0]
 
         # get text features
-        all_texts = ["This is a sound of " + t for t in args.class_index_dict.keys()]
+        all_texts = [t for t in args.class_index_dict.keys()]
         # (yusong): a hack, can make it better
         if args.tmodel == "transformer":
             from clap_module.tokenizer import tokenize

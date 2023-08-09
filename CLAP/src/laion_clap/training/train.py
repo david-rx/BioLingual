@@ -534,8 +534,6 @@ def get_metrics_biolingual(
     assert logits_per_audio.shape == logits_per_text.t().shape, "Mismatched dimensions between logits"
 
     
-    # logits_per_text = logits_per_audio.t().detach().cpu()
-
     labels = torch.arange(audio_features.shape[0]).long()
     # Change the loss from two terms into four terms with 2x2 combined CE loss
     total_loss = (

@@ -138,7 +138,7 @@ class CLAPLanguageAudioClassifier(nn.Module):
     def forward(self, x, y=None):
         x = [s.cpu().numpy() for s in x]
         inputs = self.processor(audios=x, text=self.labels, return_tensors="pt", sampling_rate=48000, padding=True).to(self.device)
-        clap_output = self.clap(**inputs, return_loss=True)
+        clap_output = self.clap(**inputs)
         out = clap_output.logits_per_audio
         loss = self.multimodal_loss(audio_embeds=clap_output.audio_embeds,
                                     text_embeds=clap_output.text_embeds, logit_scale_audio=self.clap.logit_scale_a.exp(), label_indices=y)

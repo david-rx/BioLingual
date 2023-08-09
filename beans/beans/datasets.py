@@ -124,8 +124,11 @@ class ClassificationDataset(Dataset):
         self.ys = []
 
         for _, row in df.iterrows():
-            if "test_set.csv" in metadata_path:
-                self.xs.append("../" + row['path'])
+            if "test_set.csv" in metadata_path: # for retrieval eval
+                self.xs.append("../beans" + row['path'])
+                self.ys.append(row["caption"])
+                continue
+                row["label"] = row["caption"]
             else:
                 self.xs.append(row['path'])
 

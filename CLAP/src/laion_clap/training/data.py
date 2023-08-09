@@ -561,8 +561,8 @@ def preprocess_single(
     sample["full_text"] = texts
 
     if isinstance(texts, list) and isinstance(texts[0], str) and len(texts) > 1:
-        texts = texts[0]
-        # texts = random.choice(texts)
+        texts = texts[0] #eval only - take the caption with the common name
+        # texts = random.choice(texts) #for train
     sample["raw_text"] = texts
     sample["text"] = tokenizer(texts, tmodel=tmodel)  # text shape: [num_token]
     if class_index_dict is not None:
