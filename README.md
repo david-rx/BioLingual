@@ -1,7 +1,7 @@
 # BioLingual
 ## Contrastive language-audio pretraining for bioacoustics
 
-**Paper**: Transferable Models for Bioacoustics with Human Language Supervision [arxiv link](#)
+**Paper**: Transferable Models for Bioacoustics with Human Language Supervision [arxiv](https://arxiv.org/abs/2308.04978)
 
 Use the model on HuggingFace! [davidrrobinson/BioLingual](https://huggingface.co/davidrrobinson/BioLingual)
 
@@ -20,7 +20,7 @@ cd beans
 Follow instructions in [beans/README.MD](./beans/README.md) to download the datasets
 ```bash
 python run_benchmark.py
-```
+``` 
 
 The AnimalSpeak dataset will be released shortly.
 
