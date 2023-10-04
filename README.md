@@ -7,7 +7,7 @@ Use the model on HuggingFace! [davidrrobinson/BioLingual](https://huggingface.co
 
 BioLingual is a language-audio model for bioacoustics, useful for zero-shot audio classification and sound detection, text-to-audio search, or for fine-tuning on new bioacoustic tasks.
 
-AnimalSpeak is a large-scale language-audio dataset used to train BioLingual, created by captioning bioacoustics archives such as Xeno-canto and iNaturalist.
+AnimalSpeak is a large-scale language-audio dataset used to train BioLingual, created by captioning bioacoustic archives including Xeno-canto and iNaturalist.
 
 ![BioLingual.png](BioLingual.png)
 
