@@ -22,7 +22,7 @@ Follow instructions in [beans/README.MD](./beans/README.md) to download the data
 python run_benchmark.py
 ``` 
 
-The AnimalSpeak dataset will be released shortly.
+The AnimalSpeak dataset is released at https://huggingface.co/datasets/davidrrobinson/AnimalSpeak
 
 ## Acknowledgements
 
